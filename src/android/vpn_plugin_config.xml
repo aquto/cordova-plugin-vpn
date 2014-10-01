@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string
+        name="vpn_name"
+        >help I\'m trapped in a vpn factory</string>
+    <bool
+        name="mobile_only"
+        >false</bool>
+</resources>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+           id="com.aquto.cordova.VPNManager"
+      version="0.0.1">
+
+    <name>VPN Manager</name>
+
+    <description>
+        Allows users to provision, enable and disable a vpn
+    </description>
+
+    <license>MIT</license>
+    <keywords>cordova,vpn</keywords>
+
+    <js-module src="www/VPNManager.js" name="VPNManager">
+        <clobbers target="window.plugins.VPNManager" />
+    </js-module>
+
+    <!-- ios -->
+    <platform name="ios">
+
+        <config-file target="config.xml" parent="/*">
+            <feature name="VPNManager">
+                <param name="ios-package" value="VPNManager" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <framework src="NetworkExtension.framework" />
+        <framework src="Security.framework" />
+        <framework src="SystemConfiguration.framework" />
+
+        <header-file src="src/ios/UICKeyChainStore.h" />
+        <header-file src="src/ios/VPNManager.h" />
+        <header-file src="src/ios/Reachability.h" />
+
+        <source-file src="src/ios/UICKeyChainStore.m" />
+        <source-file src="src/ios/VPNManager.m" />
+        <source-file src="src/ios/Reachability.m" />
+
+    </platform>
+
+
+    <!-- android -->
+    <platform name="android">
+
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <service
+                android:name="org.strongswan.android.logic.CharonVpnService"
+                android:exported="false"
+                android:permission="android.permission.BIND_VPN_SERVICE" >
+                <intent-filter>
+                    <action android:name="android.net.VpnService" />
+                </intent-filter>
+            </service>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+        </config-file>
+
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="VPNManager">
+              <param name="android-package" value="org.aquto.cordova.vpn.VPNManager"/>
+            </feature>
+        </config-file>
+
+
+        <source-file src="src/android/VPNManager.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/vpn_plugin_config.xml" target-dir="res/values" />
+        <source-file src="src/android/VpnProfile.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/VpnType.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/RemediationInstruction.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/ImcState.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/CharonVpnService.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/NetworkManager.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/libs/armeabi/libstrongswan.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libhydra.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libcharon.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libipsec.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libandroidbridge.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libtncif.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libtnccs.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libimcv.so" target-dir="libs/armeabi" />
+        <source-file src="src/android/libs/armeabi/libpts.so" target-dir="libs/armeabi" />
+
+
+    </platform>
+
+
+</plugin>
