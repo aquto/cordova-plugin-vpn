@@ -22,7 +22,7 @@
 
 static NSString * const serviceName = @"com.kickbit.vpn";
 
-static BOOL enableWiFiChecks = true;
+static BOOL enableWiFiChecks = false;
 
 - (void)pluginInitialize {
     vpnManager = [NEVPNManager sharedManager];
