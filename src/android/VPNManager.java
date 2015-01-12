@@ -135,10 +135,11 @@ public class VPNManager extends CordovaPlugin {
       case PREPARE_VPN_SERVICE:
         if (resultCode == RESULT_OK)
         {
+          CharonVpnService.registerCallback(callbackContext);
+
           Intent cintent = new Intent(cordova.getActivity(), CharonVpnService.class);
           cintent.putExtras(vpnInfo.toBundle());
           cordova.getActivity().startService(cintent);
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, true));
         }else{
           callbackContext.sendPluginResult(error(ErrorCode.PERMISSION_NOT_GRANTED));
         }
@@ -223,10 +224,6 @@ public class VPNManager extends CordovaPlugin {
       else if (action.equals("isVpnCapable")) {
         PluginResult.Status status = PluginResult.Status.OK;
         callbackContext.sendPluginResult(new PluginResult(status, isDeviceVpnCapable()));
-      }
-      // register listeners for VPN state changes
-      else if (action.equals("listen")) {
-          CharonVpnService.registerCallback(callbackContext);
       }
       // attempt to enable the VPN
       else if (action.equals("enable")) {

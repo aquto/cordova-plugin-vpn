@@ -67,6 +67,8 @@ import android.util.Log;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 
+import android.os.CountDownTimer;
+
 public class CharonVpnService extends VpnService implements Runnable
 {
   public static final String STOP_REASON = "stopReason";
@@ -95,7 +97,8 @@ public class CharonVpnService extends VpnService implements Runnable
     LOOKUP_FAILED,
     UNREACHABLE,
     GENERIC_ERROR,
-    DISALLOWED_NETWORK_TYPE
+    DISALLOWED_NETWORK_TYPE,
+    TIMEOUT
   }
 
   private String mLogFile;
@@ -120,6 +123,8 @@ public class CharonVpnService extends VpnService implements Runnable
 
   private static CallbackContext callback = null;
 
+  private static CountDownTimer timeout = null;
+
   //synchronized because callbacks are unlikely to be thread safe
   public synchronized static void registerCallback(CallbackContext callback){
     CharonVpnService.callback = callback;
@@ -127,19 +132,28 @@ public class CharonVpnService extends VpnService implements Runnable
 
   //synchronized because callbacks are unlikely to be thread safe
   private synchronized static void onStateChange(State newState){
+    Log.d(TAG, "onStateChange: " + newState);
     if (callback != null){
       PluginResult pr = new PluginResult(PluginResult.Status.OK, ""+newState);
       pr.setKeepCallback(true);
       callback.sendPluginResult(pr);
+    }
+    //cancel timeout if connection succeeds
+    if (timeout != null && newState == State.CONNECTED){
+      Log.d(TAG, "cancel timeout on connected state change");
+      timeout.cancel();
     }
   }
 
   //synchronized because callbacks are unlikely to be thread safe
   private synchronized static void onErrorStateChange(ErrorState newErrorState){
     if (callback != null){
+      Log.d(TAG, "onerrorStateChange: " + newErrorState);
       PluginResult pr = new PluginResult(PluginResult.Status.ERROR, ""+newErrorState);
       pr.setKeepCallback(true);
       callback.sendPluginResult(pr);
+      //wipe out callback so that only the first error is sent
+      callback = null;
     }
   }
 
@@ -164,25 +178,49 @@ public class CharonVpnService extends VpnService implements Runnable
   }
 
 
+  private void startTimeoutTimer(long millis){
+
+    CountDownTimer timer = new CountDownTimer(millis, millis) {
+      public void onTick(long millisUntilFinished) {
+       //no-op
+      }
+
+      public void onFinish() {
+       Log.d(TAG, "timeout timer finish");
+       onErrorStateChange(ErrorState.TIMEOUT);
+       //kill current connection
+       setNextProfile(null);
+      }
+    };
+
+    Log.d(TAG, "timeout timer started");
+
+
+    timer.start();
+    timeout = timer;
+  }
+
+
   @Override
   public int onStartCommand(Intent intent, int flags, int startId)
   {
     if (intent != null)
     {
       if (intent.hasExtra(STOP_REASON)){
-                                if (intent.getStringExtra(STOP_REASON).equals(DISALLOWED_NETWORK_STOP_REASON)){
-                                    setError(ErrorState.DISALLOWED_NETWORK_TYPE);
-                                }
+        if (intent.getStringExtra(STOP_REASON).equals(DISALLOWED_NETWORK_STOP_REASON)){
+          setError(ErrorState.DISALLOWED_NETWORK_TYPE);
+        }
 
         Log.d(TAG, "next profile: null (kill connection)");
         setNextProfile(null);
       } else {
 
         VpnProfile profile = VpnProfile.fromBundle(intent.getExtras());
-                                if (profile != null){
-            Log.d(TAG, "charon: connect using vpn profile " + profile);
-                                }
-                                setNextProfile(profile);
+        if (profile != null){
+          Log.d(TAG, "charon: connect using vpn profile " + profile);
+        }
+        setNextProfile(profile);
+        startTimeoutTimer(1000);
       }
     }
     return START_NOT_STICKY;
@@ -271,9 +309,9 @@ public class CharonVpnService extends VpnService implements Runnable
             }
           }
           else if (mobileOnly && !NetworkManager.connectionValid(info)){
-              // handles the edge case where we connect to wifi after
-              // an intent to connect has been sent but before connection occurs
-              setError(ErrorState.DISALLOWED_NETWORK_TYPE);
+            // handles the edge case where we connect to wifi after
+            // an intent to connect has been sent but before connection occurs
+            setError(ErrorState.DISALLOWED_NETWORK_TYPE);
           } else {
 
             mCurrentProfile = mNextProfile;
@@ -286,7 +324,7 @@ public class CharonVpnService extends VpnService implements Runnable
             Boolean initRes = initializeCharon(builder, mLogFile, mCurrentProfile.vpnType.getEnableBYOD());
             if (initRes)
             {
-
+              onStateChange(State.CONNECTING);
               Log.i(TAG, "charon started");
               initiate(mCurrentProfile.vpnType.getIdentifier(),
                    mCurrentProfile.gateway, mCurrentProfile.username,
