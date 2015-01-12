@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2014-2015 Paul Kinsky
  * Copyright (C) 2012-2013 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
