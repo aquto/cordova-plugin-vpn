@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2014-2015 Paul Kinsky
  * Copyright (C) 2012 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
@@ -21,70 +22,70 @@ import android.os.Bundle;
 
 public class VpnProfile implements Cloneable
 {
-	public final String name, gateway, username, password, alias;
-	public final VpnType vpnType = VpnType.IKEV2_CERT_EAP; //hardcoded to type used here
+  public final String name, gateway, username, password, alias;
+  public final VpnType vpnType = VpnType.IKEV2_CERT_EAP; //hardcoded to type used here
 
-        final static String VpnName = "VPN_NAME";
-        final static String VpnGateway = "VPN_Gateway";
-        final static String VpnUsername= "VPN_USERNAME";
-        final static String VpnPassword = "VPN_PASSWORD";
+  final static String VpnName = "VPN_NAME";
+  final static String VpnGateway = "VPN_Gateway";
+  final static String VpnUsername= "VPN_USERNAME";
+  final static String VpnPassword = "VPN_PASSWORD";
 
-        public VpnProfile(String name, String gateway, String username, String password){
-            this.username = username;
-            this.gateway = gateway;
-            this.name = name;
-            this.password = password;
-            this.alias = username + "@" + gateway;
-        }
+  public VpnProfile(String name, String gateway, String username, String password){
+    this.username = username;
+    this.gateway = gateway;
+    this.name = name;
+    this.password = password;
+    this.alias = username + "@" + gateway;
+  }
 
-        public Bundle toBundle(){
-            Bundle b = new Bundle();
-            b.putString(VpnName, name);
-            b.putString(VpnGateway, gateway);
-            b.putString(VpnUsername, username);
-            b.putString(VpnPassword, password);
-            return b;
-        }
+  public Bundle toBundle(){
+    Bundle b = new Bundle();
+    b.putString(VpnName, name);
+    b.putString(VpnGateway, gateway);
+    b.putString(VpnUsername, username);
+    b.putString(VpnPassword, password);
+    return b;
+  }
 
-        public static VpnProfile fromBundle(Bundle b){
-            String name = b.getString(VpnName);
-            String gateway = b.getString(VpnGateway);
-            String username = b.getString(VpnUsername);
-            String password = b.getString(VpnPassword);
-            if (name != null && gateway != null && username != null && password != null)
-            {
-                return new VpnProfile(name, gateway, username, password);
-            }else{
-                return null;
-            }
-        }
+  public static VpnProfile fromBundle(Bundle b){
+    String name = b.getString(VpnName);
+    String gateway = b.getString(VpnGateway);
+    String username = b.getString(VpnUsername);
+    String password = b.getString(VpnPassword);
+    if (name != null && gateway != null && username != null && password != null)
+    {
+      return new VpnProfile(name, gateway, username, password);
+    }else{
+      return null;
+    }
+  }
 
-	@Override
-	public String toString()
-	{
-		return name;
-	}
-	
-	@Override
-	public boolean equals(Object o)
-	{
-		if (o != null && o instanceof VpnProfile)
-		{
-			return this.name== ((VpnProfile)o).name;
-		}
-		return false;
-	}
+  @Override
+  public String toString()
+  {
+    return name;
+  }
 
-	@Override
-	public VpnProfile clone()
-	{
-		try
-		{
-			return (VpnProfile)super.clone();
-		}
-		catch (CloneNotSupportedException e)
-		{
-			throw new AssertionError();
-		}
-	}
+  @Override
+  public boolean equals(Object o)
+  {
+    if (o != null && o instanceof VpnProfile)
+    {
+      return this.name== ((VpnProfile)o).name;
+    }
+    return false;
+  }
+
+  @Override
+  public VpnProfile clone()
+  {
+    try
+    {
+      return (VpnProfile)super.clone();
+    }
+    catch (CloneNotSupportedException e)
+    {
+      throw new AssertionError();
+    }
+  }
 }
