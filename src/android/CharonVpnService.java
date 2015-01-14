@@ -132,7 +132,7 @@ public class CharonVpnService extends VpnService implements Runnable
 
   //synchronized because callbacks are unlikely to be thread safe
   private synchronized static void onStateChange(State newState){
-    Log.d(TAG, "onStateChange: " + newState);
+    Log.d(TAG, "onStateChange: " + newState + " at time " + System.currentTimeMillis());
     if (callback != null){
       PluginResult pr = new PluginResult(PluginResult.Status.OK, ""+newState);
       pr.setKeepCallback(true);
@@ -186,14 +186,14 @@ public class CharonVpnService extends VpnService implements Runnable
       }
 
       public void onFinish() {
-       Log.d(TAG, "timeout timer finish");
+       Log.d(TAG, "timeout timer finish at " + System.currentTimeMillis());
        onErrorStateChange(ErrorState.TIMEOUT);
        //kill current connection
        setNextProfile(null);
       }
     };
 
-    Log.d(TAG, "timeout timer started");
+    Log.d(TAG, "timeout timer started at " + System.currentTimeMillis());
 
 
     timer.start();
@@ -220,7 +220,7 @@ public class CharonVpnService extends VpnService implements Runnable
           Log.d(TAG, "charon: connect using vpn profile " + profile);
         }
         setNextProfile(profile);
-        startTimeoutTimer(1000);
+        startTimeoutTimer(5000);
       }
     }
     return START_NOT_STICKY;
