@@ -35,7 +35,6 @@ static BOOL enableWiFiChecks = false;
             NEVPNProtocolIPSec *proto = (NEVPNProtocolIPSec *)vpnManager.protocol;
             proto.passwordReference = [self searchKeychainCopyMatching:@"VPNPassword"];
             proto.identityDataPassword = [store stringForKey:@"VPNCertPassword"];
-            [vpnManager setLocalizedDescription:@"Kickbit VPN"];
             [vpnManager setProtocol:proto];
             [vpnManager saveToPreferencesWithCompletionHandler:^(NSError *error) {
                 if(error)
@@ -124,6 +123,7 @@ static BOOL enableWiFiChecks = false;
         NSString* vpnHost = [options objectForKey:@"vpnHost"];
         NSString* vpnCert = [options objectForKey:@"certificate"];
         NSString* vpnCertPassword = [options objectForKey:@"certificatePassword"];
+        NSString* appName = [options objectForKey:@"appName"];
 
         NSData* certData = [[NSData alloc]initWithBase64EncodedString:vpnCert options:NSDataBase64DecodingIgnoreUnknownCharacters];
         [store setString:vpnPassword forKey:@"VPNPassword"];
@@ -147,7 +147,7 @@ static BOOL enableWiFiChecks = false;
                 proto.remoteIdentifier = vpnHost;
                 proto.useExtendedAuthentication = YES;
                 proto.disconnectOnSleep = NO;
-                [vpnManager setLocalizedDescription:@"Kickbit VPN"];
+                [vpnManager setLocalizedDescription:appName];
                 [vpnManager setProtocol:proto];
                 [vpnManager setEnabled:YES];
                 if(enableWiFiChecks) {
