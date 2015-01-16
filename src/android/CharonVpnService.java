@@ -193,7 +193,7 @@ public class CharonVpnService extends VpnService implements Runnable
       }
     };
 
-    Log.d(TAG, "timeout timer started at " + System.currentTimeMillis());
+    Log.d(TAG, "timeout timer (" + millis + ") started at " + System.currentTimeMillis());
 
 
     timer.start();
@@ -220,7 +220,7 @@ public class CharonVpnService extends VpnService implements Runnable
           Log.d(TAG, "charon: connect using vpn profile " + profile);
         }
         setNextProfile(profile);
-        startTimeoutTimer(5000);
+        startTimeoutTimer(profile.vpnConnectionTimeoutMillis);
       }
     }
     return START_NOT_STICKY;

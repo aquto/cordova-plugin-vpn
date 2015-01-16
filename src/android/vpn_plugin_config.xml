@@ -3,6 +3,9 @@
     <string
         name="vpn_name"
         >help I\'m trapped in a vpn factory</string>
+    <integer
+        name="vpn_default_timeout"
+        >10000</integer>
     <bool
         name="mobile_only"
         >false</bool>

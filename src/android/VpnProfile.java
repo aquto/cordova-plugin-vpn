@@ -23,19 +23,22 @@ import android.os.Bundle;
 public class VpnProfile implements Cloneable
 {
   public final String name, gateway, username, password, alias;
+  public final int vpnConnectionTimeoutMillis;
   public final VpnType vpnType = VpnType.IKEV2_CERT_EAP; //hardcoded to type used here
 
   final static String VpnName = "VPN_NAME";
   final static String VpnGateway = "VPN_Gateway";
   final static String VpnUsername= "VPN_USERNAME";
   final static String VpnPassword = "VPN_PASSWORD";
+  final static String VpnConnectionTimeout = "VPN_TIMEOUT";
 
-  public VpnProfile(String name, String gateway, String username, String password){
+  public VpnProfile(String name, String gateway, String username, String password, int vpnConnectionTimeoutMillis){
     this.username = username;
     this.gateway = gateway;
     this.name = name;
     this.password = password;
     this.alias = username + "@" + gateway;
+    this.vpnConnectionTimeoutMillis = vpnConnectionTimeoutMillis;
   }
 
   public Bundle toBundle(){
@@ -44,6 +47,7 @@ public class VpnProfile implements Cloneable
     b.putString(VpnGateway, gateway);
     b.putString(VpnUsername, username);
     b.putString(VpnPassword, password);
+    b.putInt(VpnConnectionTimeout, vpnConnectionTimeoutMillis);
     return b;
   }
 
@@ -52,9 +56,10 @@ public class VpnProfile implements Cloneable
     String gateway = b.getString(VpnGateway);
     String username = b.getString(VpnUsername);
     String password = b.getString(VpnPassword);
+    int vpnConnectionTimeoutMillis = b.getInt(VpnConnectionTimeout);
     if (name != null && gateway != null && username != null && password != null)
     {
-      return new VpnProfile(name, gateway, username, password);
+      return new VpnProfile(name, gateway, username, password, vpnConnectionTimeoutMillis);
     }else{
       return null;
     }

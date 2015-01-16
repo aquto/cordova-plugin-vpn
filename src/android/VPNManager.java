@@ -157,11 +157,16 @@ public class VPNManager extends CordovaPlugin {
 
     private void enableConnection(JSONObject provisioningJson, CallbackContext context) throws Exception {
 
-      String rawCert = null;
-      String vpnHost = null;
-      String vpnPassword = null;
-      String certificatePassword = null;
-      String vpnUsername = null;
+      String rawCert                    = null;
+      String vpnHost                    = null;
+      String vpnPassword                = null;
+      String certificatePassword        = null;
+      String vpnUsername                = null;
+      //get default value from config
+      int vpnConnectionTimeoutMillisId  = cordova.getActivity().getResources().getIdentifier("vpn_default_timeout", "integer", cordova.getActivity().getPackageName());
+      int vpnConnectionTimeoutMillis   = cordova.getActivity().getResources().getInteger(vpnConnectionTimeoutMillisId);
+
+      Log.d(TAG, "loaded vpn default timeout: " + vpnConnectionTimeoutMillis);
 
       try{
         rawCert = provisioningJson.getString("certificate");
@@ -169,13 +174,14 @@ public class VPNManager extends CordovaPlugin {
         vpnPassword = provisioningJson.getString("vpnPassword");
         certificatePassword = provisioningJson.getString("certificatePassword");
         vpnUsername = provisioningJson.getString("vpnUsername");
+        vpnConnectionTimeoutMillis = provisioningJson.getInt("vpnConnectionTimeoutMillis");
       } catch (JSONException j){}
 
       if (rawCert != null && vpnHost != null && vpnPassword != null && certificatePassword != null && vpnUsername != null){
 
         int vpnNameId = cordova.getActivity().getResources().getIdentifier("vpn_name", "string", cordova.getActivity().getPackageName());
         String vpnName = cordova.getActivity().getResources().getString(vpnNameId);
-        vpnInfo = new VpnProfile(vpnName, vpnHost, vpnUsername, vpnPassword);
+        vpnInfo = new VpnProfile(vpnName, vpnHost, vpnUsername, vpnPassword, vpnConnectionTimeoutMillis);
 
         KeyStore keystore = KeyStore.getInstance("PKCS12");
         byte[] cert = android.util.Base64.decode(rawCert, 0);
