@@ -17,42 +17,42 @@ package org.aquto.cordova.vpn;
 
 public enum ImcState
 {
-	UNKNOWN(0),
-	ALLOW(1),
-	BLOCK(2),
-	ISOLATE(3);
+  UNKNOWN(0),
+  ALLOW(1),
+  BLOCK(2),
+  ISOLATE(3);
 
-	private final int mValue;
+  private final int mValue;
 
-	private ImcState(int value)
-	{
-		mValue = value;
-	}
+  private ImcState(int value)
+  {
+    mValue = value;
+  }
 
-	/**
-	 * Get the numeric value of the IMC state.
-	 * @return numeric value
-	 */
-	public int getValue()
-	{
-		return mValue;
-	}
+  /**
+   * Get the numeric value of the IMC state.
+   * @return numeric value
+   */
+  public int getValue()
+  {
+    return mValue;
+  }
 
-	/**
-	 * Get the enum entry from a numeric value, if defined
-	 *
-	 * @param value numeric value
-	 * @return the enum entry or null
-	 */
-	public static ImcState fromValue(int value)
-	{
-		for (ImcState state : ImcState.values())
-		{
-			if (state.mValue == value)
-			{
-				return state;
-			}
-		}
-		return null;
-	}
+  /**
+   * Get the enum entry from a numeric value, if defined
+   *
+   * @param value numeric value
+   * @return the enum entry or null
+   */
+  public static ImcState fromValue(int value)
+  {
+    for (ImcState state : ImcState.values())
+    {
+      if (state.mValue == value)
+      {
+        return state;
+      }
+    }
+    return null;
+  }
 }

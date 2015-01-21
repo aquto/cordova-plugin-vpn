@@ -46,34 +46,35 @@ static BOOL enableWiFiChecks = false;
     }];
 }
 
-
 - (void)enable:(CDVInvokedUrlCommand*)command {
     NSString* localCallbackId = command.callbackId;
 
     [self.commandDelegate runInBackground:^{
-        CDVPluginResult* pluginResult = nil;
-
         Reachability *reachability = [Reachability reachabilityForInternetConnection];
         NetworkStatus status = [reachability currentReachabilityStatus];
         if(enableWiFiChecks && status == ReachableViaWiFi) {
             NSLog(@"Failed to enable the Kickbit VPN because WiFi is enabled.");
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
         } else if(vpnManager.connection.status != NEVPNStatusDisconnected) {
             NSLog(@"Failed to enable the Kickbit VPN because the vpn is already enabled.");
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
         } else {
             NSLog(@"Enabling the Kickbit VPN.");
             NSError *startError;
             [vpnManager.connection startVPNTunnelAndReturnError:&startError];
             if(startError) {
                 NSLog(@"Start error: %@", startError.localizedDescription);
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+                [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
             } else {
-                NSLog(@"Connection established!");
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"enabled"];
+                [[NSNotificationCenter defaultCenter] removeObserver:self];
+                [[NSNotificationCenter defaultCenter] addObserverForName:NEVPNStatusDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notif) {
+                    CDVPluginResult* pluginResult = [self vpnStatusToResult:vpnManager.connection.status];
+                    [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
+                    NSLog (@"Successfully received VPN status change notification: %d", vpnManager.connection.status);
+                }];
             }
         }
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
     }];
 }
 
@@ -88,11 +89,40 @@ static BOOL enableWiFiChecks = false;
         else {
             NSLog(@"Disabling the Kickbit VPN.");
             [vpnManager.connection stopVPNTunnel];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"disabled"];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"DISABLED"];
         }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
         
     }];
+}
+
+- (CDVPluginResult *) vpnStatusToResult:(NEVPNStatus)status {
+    CDVPluginResult *result = nil;
+
+    switch(status) {
+        case NEVPNStatusInvalid:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+            break;
+        case NEVPNStatusDisconnected:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"DISCONNECTED"];
+            break;
+        case NEVPNStatusConnecting:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CONNECTING"];
+            break;
+        case NEVPNStatusConnected:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CONNECTED"];
+            break;
+        case NEVPNStatusReasserting:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CONNECTING"];
+            break;
+        case NEVPNStatusDisconnecting:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"DISCONNECTING"];
+            break;
+        default:
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+    }
+
+    return result;
 }
 
 - (void)isUp:(CDVInvokedUrlCommand*)command {
@@ -254,5 +284,8 @@ static BOOL enableWiFiChecks = false;
     return (__bridge_transfer NSData *)result;
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 
 @end
