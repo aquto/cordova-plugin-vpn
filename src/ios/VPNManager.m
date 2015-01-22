@@ -249,18 +249,13 @@ static BOOL enableWiFiChecks = false;
                 [store removeItemForKey:@"VPNCert"];
                 [store synchronize];
                 [vpnManager removeFromPreferencesWithCompletionHandler:^(NSError *error) {
-                    CDVPluginResult* pluginResult = nil;
-                    if(error) {
+                    if(error)
                         NSLog(@"Remove config failed [%@]", error.localizedDescription);
-                        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-                    } else {
-                        NSDictionary *statusData = @{
-                                                     @"up" : [NSNumber numberWithBool:isUp],
-                                                     @"needsProfile" : [NSNumber numberWithBool:YES]
-                                                     };
-                        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData];
-                    }
-                    [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
+                    NSDictionary *statusData = @{
+                                                 @"up" : [NSNumber numberWithBool:isUp],
+                                                 @"needsProfile" : [NSNumber numberWithBool:YES]
+                                                 };
+                    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData] callbackId:localCallbackId];
                 }];
             }
         } else
