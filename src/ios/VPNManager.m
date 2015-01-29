@@ -20,11 +20,13 @@
 
 @implementation VPNManager
 
-static NSString * const serviceName = @"com.kickbit.vpn";
+static NSString * serviceName;
 
-static BOOL enableWiFiChecks = false;
+static BOOL allowWiFi;
 
 - (void)pluginInitialize {
+    serviceName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];
+    allowWiFi = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"AllowWiFi"] boolValue];
     vpnManager = [NEVPNManager sharedManager];
     store = [UICKeyChainStore keyChainStoreWithService:serviceName];
 
@@ -53,7 +55,7 @@ static BOOL enableWiFiChecks = false;
     [self.commandDelegate runInBackground:^{
         Reachability *reachability = [Reachability reachabilityForInternetConnection];
         NetworkStatus status = [reachability currentReachabilityStatus];
-        if(enableWiFiChecks && status == ReachableViaWiFi) {
+        if(!allowWiFi && status == ReachableViaWiFi) {
             NSLog(@"Failed to enable the Kickbit VPN because WiFi is enabled.");
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
         } else if(vpnManager.connection.status != NEVPNStatusDisconnected) {
@@ -182,7 +184,7 @@ static BOOL enableWiFiChecks = false;
                 [vpnManager setLocalizedDescription:appName];
                 [vpnManager setProtocol:proto];
                 [vpnManager setEnabled:YES];
-                if(enableWiFiChecks) {
+                if(!allowWiFi) {
                     [vpnManager setOnDemandEnabled:YES];
                     NSMutableArray *rules = [[NSMutableArray alloc] init];
                     NEOnDemandRuleDisconnect *disconnectRule = [NEOnDemandRuleDisconnect new];
