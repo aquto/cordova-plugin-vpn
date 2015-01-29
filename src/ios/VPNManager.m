@@ -36,6 +36,7 @@ static BOOL enableWiFiChecks = false;
             proto.passwordReference = [self searchKeychainCopyMatching:@"VPNPassword"];
             proto.identityDataPassword = [store stringForKey:@"VPNCertPassword"];
             [vpnManager setProtocol:proto];
+            [vpnManager setEnabled:YES];
             [vpnManager saveToPreferencesWithCompletionHandler:^(NSError *error) {
                 if(error)
                     NSLog(@"Save config failed [%@]", error.localizedDescription);
@@ -165,6 +166,7 @@ static BOOL enableWiFiChecks = false;
     
             if(error) {
                 NSLog(@"Load error: %@", error);
+                [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
             } else {
                 NEVPNProtocolIPSec *proto = [[NEVPNProtocolIPSec alloc] init];
                 proto.username = vpnUsername;
@@ -208,45 +210,66 @@ static BOOL enableWiFiChecks = false;
     NSString* localCallbackId = command.callbackId;
     
     [self.commandDelegate runInBackground:^{
-        BOOL isUp = vpnManager.connection.status == NEVPNStatusConnected;
-        BOOL needsProfile = YES;
+        BOOL isUp = (vpnManager.connection.status == NEVPNStatusConnected);
         NSString* vpnUsername = [options objectForKey:@"vpnUsername"];
         NSString* vpnPassword = [options objectForKey:@"vpnPassword"];
         NSString* vpnHost = [options objectForKey:@"vpnHost"];
         NSString* vpnCert = [options objectForKey:@"certificate"];
         NSString* vpnCertPassword = [options objectForKey:@"certificatePassword"];
         if (vpnUsername != nil && vpnHost != nil && vpnCert != nil && vpnCertPassword != nil && vpnPassword != nil) {
-            NEVPNProtocolIPSec *proto = (NEVPNProtocolIPSec *)vpnManager.protocol;
-            NSString* passwdCmp = [store stringForKey:@"VPNPassword"];
-            NSString* certPasswdCmp = [store stringForKey:@"VPNCertPassword"];
-            NSData* certDataCmp = [store dataForKey:@"VPNCert"];
-            NSData* certData = [[NSData alloc]initWithBase64EncodedString:vpnCert options:NSDataBase64DecodingIgnoreUnknownCharacters];
-            NSLog(@"Username: %@", [proto.username isEqualToString:vpnUsername] ? @"YES" : @"NO");
-            NSLog(@"Server Address: %@", [proto.serverAddress isEqualToString:vpnHost] ? @"YES" : @"NO");
-            NSLog(@"Certificate: %@", [certDataCmp isEqualToData:certData] ? @"YES" : @"NO");
-            NSLog(@"Certificate Password: %@", [certPasswdCmp isEqualToString:vpnCertPassword] ? @"YES" : @"NO");
-            NSLog(@"Password: %@", [passwdCmp isEqualToString:vpnPassword] ? @"YES" : @"NO");
-            if (proto && [proto.username isEqualToString:vpnUsername] && [proto.serverAddress isEqualToString:vpnHost] &&
-                    [certDataCmp isEqualToData:certData] && [certPasswdCmp isEqualToString:vpnCertPassword] && [passwdCmp isEqualToString:vpnPassword]) {
-                needsProfile = NO;
-                [vpnManager setEnabled:YES];
-            } else {
-                [store removeItemForKey:@"VPNPassword"];
-                [store removeItemForKey:@"VPNCertPassword"];
-                [store removeItemForKey:@"VPNCert"];
-                [store synchronize];
-                [vpnManager removeFromPreferencesWithCompletionHandler:^(NSError *error) {
-                    if(error)
-                        NSLog(@"Remove config failed [%@]", error.localizedDescription);
-                }];
-            }
-        }
-        NSDictionary *statusData = @{
-                                     @"up" : [NSNumber numberWithBool:isUp],
-                                     @"needsProfile" : [NSNumber numberWithBool:needsProfile]
-                                     };
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
+            [vpnManager loadFromPreferencesWithCompletionHandler:^(NSError *error) {
+                if(error)
+                    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
+                else {
+                    NEVPNProtocolIPSec *proto = (NEVPNProtocolIPSec *)vpnManager.protocol;
+                    NSString* passwdCmp = [store stringForKey:@"VPNPassword"];
+                    NSString* certPasswdCmp = [store stringForKey:@"VPNCertPassword"];
+                    NSData* certDataCmp = [store dataForKey:@"VPNCert"];
+                    NSData* certData = [[NSData alloc]initWithBase64EncodedString:vpnCert options:NSDataBase64DecodingIgnoreUnknownCharacters];
+                    NSLog(@"Username: %@", [proto.username isEqualToString:vpnUsername] ? @"YES" : @"NO");
+                    NSLog(@"Server Address: %@", [proto.serverAddress isEqualToString:vpnHost] ? @"YES" : @"NO");
+                    NSLog(@"Certificate: %@", [certDataCmp isEqualToData:certData] ? @"YES" : @"NO");
+                    NSLog(@"Certificate Password: %@", [certPasswdCmp isEqualToString:vpnCertPassword] ? @"YES" : @"NO");
+                    NSLog(@"Password: %@", [passwdCmp isEqualToString:vpnPassword] ? @"YES" : @"NO");
+                    if (proto && [proto.username isEqualToString:vpnUsername] && [proto.serverAddress isEqualToString:vpnHost] &&
+                        [certDataCmp isEqualToData:certData] && [certPasswdCmp isEqualToString:vpnCertPassword] && [passwdCmp isEqualToString:vpnPassword]) {
+                        proto.passwordReference = [self searchKeychainCopyMatching:@"VPNPassword"];
+                        proto.identityDataPassword = [store stringForKey:@"VPNCertPassword"];
+                        [vpnManager setProtocol:proto];
+                        [vpnManager setEnabled:YES];
+                        [vpnManager saveToPreferencesWithCompletionHandler:^(NSError *error) {
+                            CDVPluginResult* pluginResult = nil;
+                            if(error) {
+                                NSLog(@"Save config failed [%@]", error.localizedDescription);
+                                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+                            } else {
+                                NSDictionary *statusData = @{
+                                                            @"up" : [NSNumber numberWithBool:isUp],
+                                                            @"needsProfile" : [NSNumber numberWithBool:NO]
+                                                            };
+                                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData];
+                            }
+                            [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
+                        }];
+                    } else {
+                        [store removeItemForKey:@"VPNPassword"];
+                        [store removeItemForKey:@"VPNCertPassword"];
+                        [store removeItemForKey:@"VPNCert"];
+                        [store synchronize];
+                        [vpnManager removeFromPreferencesWithCompletionHandler:^(NSError *error) {
+                            if(error)
+                                NSLog(@"Remove config failed [%@]", error.localizedDescription);
+                            NSDictionary *statusData = @{
+                                                         @"up" : [NSNumber numberWithBool:isUp],
+                                                         @"needsProfile" : [NSNumber numberWithBool:YES]
+                                                         };
+                            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData] callbackId:localCallbackId];
+                        }];
+                    }
+                }
+            }];
+        } else
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
     }];
 }
 
