@@ -20,11 +20,13 @@
 
 @implementation VPNManager
 
-static NSString * const serviceName = @"com.kickbit.vpn";
+static NSString * serviceName;
 
-static BOOL enableWiFiChecks = false;
+static BOOL enableWiFiChecks;
 
 - (void)pluginInitialize {
+    serviceName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];
+    enableWiFiChecks = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"AllowWiFi"] boolValue];
     vpnManager = [NEVPNManager sharedManager];
     store = [UICKeyChainStore keyChainStoreWithService:serviceName];
 
