@@ -166,6 +166,7 @@ static BOOL enableWiFiChecks = false;
     
             if(error) {
                 NSLog(@"Load error: %@", error);
+                [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
             } else {
                 NEVPNProtocolIPSec *proto = [[NEVPNProtocolIPSec alloc] init];
                 proto.username = vpnUsername;
