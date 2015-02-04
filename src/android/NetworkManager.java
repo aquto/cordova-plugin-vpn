@@ -27,68 +27,68 @@ import java.util.*;
 
 public class NetworkManager extends BroadcastReceiver
 {
-  private static final String TAG = NetworkManager.class.getSimpleName();
+	private static final String TAG = NetworkManager.class.getSimpleName();
 
-  /**
-   * terminate the VPN connection if the active connection changes to one of the below types.
-   */
-  public static final HashSet<Integer> disallowedNetworkTypes = new HashSet<Integer>(Arrays.asList(new Integer[] {
-              ConnectivityManager.TYPE_ETHERNET,
-              ConnectivityManager.TYPE_WIFI,
-              ConnectivityManager.TYPE_WIMAX
-          }));
+	/**
+	 * terminate the VPN connection if the active connection changes to one of the below types.
+	 */
+	public static final HashSet<Integer> disallowedNetworkTypes = new HashSet<Integer>(Arrays.asList(new Integer[] {
+							ConnectivityManager.TYPE_ETHERNET,
+							ConnectivityManager.TYPE_WIFI,
+							ConnectivityManager.TYPE_WIMAX
+					}));
 
-  private final boolean mobileOnly;
+	private final boolean mobileOnly;
 
-  private final Context mContext;
-  private boolean mRegistered;
+	private final Context mContext;
+	private boolean mRegistered;
 
-  public NetworkManager(Context context)
-  {
-    mContext = context;
-    int mobileOnlyId = context.getResources().getIdentifier("mobile_only", "bool", context.getPackageName());
-    mobileOnly = context.getResources().getBoolean(mobileOnlyId);
-  }
+	public NetworkManager(Context context)
+	{
+		mContext = context;
+		int mobileOnlyId = context.getResources().getIdentifier("mobile_only", "bool", context.getPackageName());
+		mobileOnly = context.getResources().getBoolean(mobileOnlyId);
+	}
 
-  public void Register()
-  {
-    mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-  }
+	public void Register()
+	{
+		mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+	}
 
-  public void Unregister()
-  {
-    mContext.unregisterReceiver(this);
-  }
+	public void Unregister()
+	{
+		mContext.unregisterReceiver(this);
+	}
 
-  //assume null connection info to be valid
-  public static boolean connectionValid(NetworkInfo info){
-   return info == null || !disallowedNetworkTypes.contains(info.getType());
-  }
+	//assume null connection info to be valid
+	public static boolean connectionValid(NetworkInfo info){
+	 return info == null || !disallowedNetworkTypes.contains(info.getType());
+	}
 
-  private void stopVpn(){
-    Log.d(TAG, "moved to disallowed network type, spiking vpn connection");
-    Intent intent = new Intent(mContext, CharonVpnService.class);
-    intent.putExtra(CharonVpnService.STOP_REASON, CharonVpnService.DISALLOWED_NETWORK_STOP_REASON);
-    mContext.startService(intent);
-  }
+	private void stopVpn(){
+		Log.d(TAG, "moved to disallowed network type, spiking vpn connection");
+		Intent intent = new Intent(mContext, CharonVpnService.class);
+		intent.putExtra(CharonVpnService.STOP_REASON, CharonVpnService.DISALLOWED_NETWORK_STOP_REASON);
+		mContext.startService(intent);
+	}
 
-  @Override
-  public void onReceive(Context context, Intent intent)
-  {
-    ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-    NetworkInfo info = cm.getActiveNetworkInfo();
+	@Override
+	public void onReceive(Context context, Intent intent)
+	{
+		ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo info = cm.getActiveNetworkInfo();
 
-    if (mobileOnly && !connectionValid(info)){
-      stopVpn();
-    }
+		if (mobileOnly && !connectionValid(info)){
+			stopVpn();
+		}
 
-    networkChanged(info == null || !info.isConnected());
-  }
+		networkChanged(info == null || !info.isConnected());
+	}
 
-  /**
-   * Notify the native parts about a network change
-   *
-   * @param disconnected true if no connection is available at the moment
-   */
-  public native void networkChanged(boolean disconnected);
+	/**
+	 * Notify the native parts about a network change
+	 *
+	 * @param disconnected true if no connection is available at the moment
+	 */
+	public native void networkChanged(boolean disconnected);
 }
