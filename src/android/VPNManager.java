@@ -37,6 +37,8 @@ import android.net.NetworkInfo;
 import org.json.JSONException;
 import android.content.pm.PackageManager;
 import java.util.List;
+import org.strongswan.android.data.VpnProfile;
+import org.strongswan.android.data.VpnType;
 
 public class VPNManager extends CordovaPlugin {
 
@@ -138,7 +140,7 @@ public class VPNManager extends CordovaPlugin {
           CharonVpnService.registerCallback(callbackContext);
 
           Intent cintent = new Intent(cordova.getActivity(), CharonVpnService.class);
-          cintent.putExtras(vpnInfo.toBundle());
+          cintent.putExtra("profile", vpnInfo);
           cordova.getActivity().startService(cintent);
         }else{
           callbackContext.sendPluginResult(error(ErrorCode.PERMISSION_NOT_GRANTED));
@@ -181,7 +183,13 @@ public class VPNManager extends CordovaPlugin {
 
         int vpnNameId = cordova.getActivity().getResources().getIdentifier("vpn_name", "string", cordova.getActivity().getPackageName());
         String vpnName = cordova.getActivity().getResources().getString(vpnNameId);
-        vpnInfo = new VpnProfile(vpnName, vpnHost, vpnUsername, vpnPassword, vpnConnectionTimeoutMillis);
+        vpnInfo = new VpnProfile();
+        vpnInfo.setName(vpnName);
+        vpnInfo.setGateway(vpnHost);
+        vpnInfo.setUsername(vpnUsername);
+        vpnInfo.setPassword(vpnPassword);
+        vpnInfo.setVpnType(VpnType.IKEV2_CERT_EAP);
+        vpnInfo.setUserCertificateAlias(vpnUsername + "@" + vpnHost);
 
         KeyStore keystore = KeyStore.getInstance("PKCS12");
         byte[] cert = android.util.Base64.decode(rawCert, 0);
