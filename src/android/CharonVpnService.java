@@ -44,10 +44,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 
-import org.aquto.cordova.vpn.VpnProfile;
-import org.aquto.cordova.vpn.VpnType;
-import org.aquto.cordova.vpn.ImcState;
-import org.aquto.cordova.vpn.RemediationInstruction;
+import org.strongswan.android.data.VpnProfile;
+import org.strongswan.android.data.VpnType;
+import org.strongswan.android.logic.imc.ImcState;
+import org.strongswan.android.logic.imc.RemediationInstruction;
 
 
 import android.app.PendingIntent;
@@ -215,12 +215,12 @@ public class CharonVpnService extends VpnService implements Runnable
 				setNextProfile(null);
 			} else {
 
-				VpnProfile profile = VpnProfile.fromBundle(intent.getExtras());
+				Bundle data = intent.getExtras();
+				VpnProfile profile = (VpnProfile)data.getParcelable("profile");
 				if (profile != null){
 					Log.d(TAG, "charon: connect using vpn profile " + profile);
 				}
 				setNextProfile(profile);
-				startTimeoutTimer(profile.vpnConnectionTimeoutMillis);
 			}
 		}
 		return START_NOT_STICKY;
@@ -320,15 +320,15 @@ public class CharonVpnService extends VpnService implements Runnable
 						startConnection(mCurrentProfile);
 						mIsDisconnecting = false;
 
-						BuilderAdapter builder = new BuilderAdapter(mCurrentProfile.name);
-						Boolean initRes = initializeCharon(builder, mLogFile, mCurrentProfile.vpnType.getEnableBYOD());
+						BuilderAdapter builder = new BuilderAdapter(mCurrentProfile.getName());
+						Boolean initRes = initializeCharon(builder, mLogFile, mCurrentProfile.getVpnType().getEnableBYOD());
 						if (initRes)
 						{
 							onStateChange(State.CONNECTING);
 							Log.i(TAG, "charon started");
-							initiate(mCurrentProfile.vpnType.getIdentifier(),
-									 mCurrentProfile.gateway, mCurrentProfile.username,
-									 mCurrentProfile.password);
+							initiate(mCurrentProfile.getVpnType().getIdentifier(),
+									 mCurrentProfile.getGateway(), mCurrentProfile.getUsername(),
+									 mCurrentProfile.getPassword());
 						}
 						else
 						{
@@ -512,7 +512,7 @@ public class CharonVpnService extends VpnService implements Runnable
 	private byte[][] getUserCertificate() throws Exception
 	{
 		try{
-			Certificate[] certchain = getKeyStore().getCertificateChain(mCurrentProfile.alias);
+			Certificate[] certchain = getKeyStore().getCertificateChain(mCurrentProfile.getUserCertificateAlias());
 
 			byte[][] res = new byte[certchain.length][];
 
@@ -541,7 +541,7 @@ public class CharonVpnService extends VpnService implements Runnable
 	private PrivateKey getUserKey() throws Exception
 	{
 		try{
-			PrivateKey priv = (PrivateKey)getKeyStore().getKey(mCurrentProfile.alias, keystorePass.toCharArray());
+			PrivateKey priv = (PrivateKey)getKeyStore().getKey(mCurrentProfile.getUserCertificateAlias(), keystorePass.toCharArray());
 			return priv;
 		} catch (Exception ex) {
 			Log.e(TAG, "failed to create keys due to " + ex);
