@@ -165,18 +165,13 @@ public class VPNManager extends CordovaPlugin {
       String certificatePassword        = null;
       String vpnUsername                = null;
       //get default value from config
-      int vpnConnectionTimeoutMillisId  = cordova.getActivity().getResources().getIdentifier("vpn_default_timeout", "integer", cordova.getActivity().getPackageName());
-      int vpnConnectionTimeoutMillis   = cordova.getActivity().getResources().getInteger(vpnConnectionTimeoutMillisId);
-
-      Log.d(TAG, "loaded vpn default timeout: " + vpnConnectionTimeoutMillis);
-
+      
       try{
         rawCert = provisioningJson.getString("certificate");
         vpnHost = provisioningJson.getString("vpnHost");
         vpnPassword = provisioningJson.getString("vpnPassword");
         certificatePassword = provisioningJson.getString("certificatePassword");
         vpnUsername = provisioningJson.getString("vpnUsername");
-        vpnConnectionTimeoutMillis = provisioningJson.getInt("vpnConnectionTimeoutMillis");
       } catch (JSONException j){}
 
       if (rawCert != null && vpnHost != null && vpnPassword != null && certificatePassword != null && vpnUsername != null){
