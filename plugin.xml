@@ -84,7 +84,6 @@
         <source-file src="src/android/VPNManager.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/vpn_plugin_config.xml" target-dir="res/values" />
         <source-file src="src/android/CharonVpnService.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/NetworkManager.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/CordovaVPNStateListener.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/libs/armeabi/libstrongswan.so" target-dir="libs/armeabi" />
         <source-file src="src/android/libs/armeabi/libhydra.so" target-dir="libs/armeabi" />
