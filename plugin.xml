@@ -64,6 +64,7 @@
                     <action android:name="android.net.VpnService" />
                 </intent-filter>
             </service>
+            <meta-data android:name="allowWiFi" android:value="$ALLOWWIFI" />
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="/*">
@@ -82,7 +83,6 @@
         <lib-file src="src/android/libs/AQStrongSwan.jar" />
 
         <source-file src="src/android/VPNManager.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/vpn_plugin_config.xml" target-dir="res/values" />
         <source-file src="src/android/CharonVpnService.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/CordovaVPNStateListener.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/libs/armeabi/libstrongswan.so" target-dir="libs/armeabi" />
