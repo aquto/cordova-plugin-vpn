@@ -1,7 +1,6 @@
 package org.aquto.cordova.vpn;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
+import org.apache.cordova.*;
 import org.strongswan.android.logic.VpnStateService;
 
 public class CordovaVPNStateListener implements VpnStateService.VpnStateListener {

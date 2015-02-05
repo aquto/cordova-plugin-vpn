@@ -14,39 +14,21 @@
 
 package org.aquto.cordova.vpn;
 
-import org.json.JSONArray;
-
-import android.os.Bundle;
+import android.content.*;
+import android.content.pm.PackageManager;
+import android.app.Service;
+import android.net.*;
+import android.os.*;
 import android.util.Log;
-import android.os.Environment;
-import org.json.JSONObject;
-import android.content.ActivityNotFoundException;
-import android.net.VpnService;
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.PluginResult;
 import java.io.*;
-import android.content.Intent;
 import java.security.KeyStore;
-import android.net.ConnectivityManager;
-
-import android.content.Context;
+import java.util.List;
+import org.apache.cordova.*;
 import org.strongswan.android.logic.CharonVpnService;
 import org.strongswan.android.logic.VpnStateService;
-import android.net.NetworkInfo;
-import org.json.JSONException;
-import android.content.pm.PackageManager;
-import java.util.List;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnType;
-import android.content.ServiceConnection;
-import android.content.ComponentName;
-import android.os.IBinder;
-
-import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.CordovaInterface;
-
-import android.app.Service;
+import org.json.*;
 
 public class VPNManager extends CordovaPlugin {
 

@@ -1,13 +1,8 @@
 package org.aquto.cordova.vpn;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.content.pm.ApplicationInfo;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.content.*;
+import android.content.pm.*;
+import android.net.*;
 import android.os.Bundle;
 import android.util.Log;
 import java.util.*;
