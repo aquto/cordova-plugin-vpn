@@ -32,7 +32,6 @@ import android.net.ConnectivityManager;
 
 import android.content.Context;
 import org.strongswan.android.logic.CharonVpnService;
-import org.strongswan.android.logic.NetworkManager;
 import org.strongswan.android.logic.VpnStateService;
 import android.net.NetworkInfo;
 import org.json.JSONException;
@@ -71,6 +70,7 @@ public class VPNManager extends CordovaPlugin {
     private static final int RESULT_OK = -1;
     private static final int PREPARE_VPN_SERVICE = 0;
 
+    private ConnectionValidityChecker validityChecker;
     private VpnProfile vpnInfo = null;
     private CallbackContext callbackContext;
     private VpnStateService mService;
@@ -95,6 +95,8 @@ public class VPNManager extends CordovaPlugin {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
+        validityChecker = new ConnectionValidityChecker(cordova.getActivity());
+        validityChecker.register();
         Intent stateIntent = new Intent(cordova.getActivity(), VpnStateService.class);
         cordova.getActivity().startService(stateIntent);
         cordova.getActivity().bindService(stateIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
@@ -105,6 +107,7 @@ public class VPNManager extends CordovaPlugin {
         if(mService != null) {
             cordova.getActivity().unbindService(mServiceConnection);
         }
+        validityChecker.unregister();
     }
 
     private PluginResult error(ErrorCode error) {
@@ -168,12 +171,6 @@ public class VPNManager extends CordovaPlugin {
             default:
                 super.onActivityResult(requestCode, resultCode, intent);
         }
-    }
-
-    private boolean connectionValid() {
-        ConnectivityManager cm = (ConnectivityManager) cordova.getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        return NetworkManager.connectionValid(info);
     }
 
     private VpnProfile toVpnProfile(JSONObject provisioningJson) throws JSONException {
@@ -250,9 +247,7 @@ public class VPNManager extends CordovaPlugin {
 
     private PluginResult handleEnableAction(JSONArray args, CallbackContext callbackContext) {
         try {
-            int mobileOnlyId = cordova.getActivity().getResources().getIdentifier("mobile_only", "bool", cordova.getActivity().getPackageName());
-            boolean mobileOnly = cordova.getActivity().getResources().getBoolean(mobileOnlyId);
-            if(!mobileOnly || connectionValid()) {
+            if(validityChecker.connectionValid()) {
                 JSONObject provisioningJson = args.getJSONObject(0);
                 VpnProfile profile = toVpnProfile(provisioningJson);
                 if(profile == null)
@@ -272,7 +267,6 @@ public class VPNManager extends CordovaPlugin {
     private PluginResult handleDisableAction() {
         // tear down the active VPN connection
         Intent intent = new Intent(cordova.getActivity(), CharonVpnService.class);
-        intent.putExtra(CharonVpnService.STOP_REASON, "manual");
         cordova.getActivity().startService(intent);
         return new PluginResult(PluginResult.Status.OK, true);
     }

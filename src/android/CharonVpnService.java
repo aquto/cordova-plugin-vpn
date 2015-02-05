@@ -65,9 +65,6 @@ import android.util.Log;
 
 public class CharonVpnService extends VpnService implements Runnable
 {
-	public static final String STOP_REASON = "stopReason";
-	public static final String DISALLOWED_NETWORK_STOP_REASON = "disallowedNetwork";
-	public static final String MANUAL_STOP_REASON = "disallowedNetwork";
 	public static String keystoreFile = "aquto_vpn_keystore";
 	public static String keystorePass = "aquto!";
 
@@ -142,22 +139,13 @@ public class CharonVpnService extends VpnService implements Runnable
 	{
 		if (intent != null)
 		{
-			if (intent.hasExtra(STOP_REASON)){
-				if (intent.getStringExtra(STOP_REASON).equals(DISALLOWED_NETWORK_STOP_REASON)){
-					setError(ErrorState.DISALLOWED_NETWORK_TYPE);
-				}
-
-				Log.d(TAG, "next profile: null (kill connection)");
-				setNextProfile(null);
-			} else {
-
-				Bundle data = intent.getExtras();
-				VpnProfile profile = (VpnProfile)data.getParcelable("profile");
-				if (profile != null){
-					Log.d(TAG, "charon: connect using vpn profile " + profile);
-				}
-				setNextProfile(profile);
+			Bundle bundle = intent.getExtras();
+			VpnProfile profile = null;
+			if (bundle != null)
+			{
+				profile = (VpnProfile)bundle.getParcelable("profile");
 			}
+			setNextProfile(profile);
 		}
 		return START_NOT_STICKY;
 	}
@@ -231,13 +219,6 @@ public class CharonVpnService extends VpnService implements Runnable
 
 					mProfileUpdated = false;
 					stopCurrentConnection();
-
-					// needed to confirm we're in an allowed connection state before connecting
-					ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-					NetworkInfo info = cm.getActiveNetworkInfo();
-					int mobileOnlyId = getResources().getIdentifier("mobile_only", "bool", getPackageName());
-					boolean mobileOnly = getResources().getBoolean(mobileOnlyId);
-
 					if (mNextProfile == null)
 					{
 						setState(State.DISABLED);
@@ -246,12 +227,8 @@ public class CharonVpnService extends VpnService implements Runnable
 							break;
 						}
 					}
-					else if (mobileOnly && !NetworkManager.connectionValid(info)){
-						// handles the edge case where we connect to wifi after
-						// an intent to connect has been sent but before connection occurs
-						setError(ErrorState.DISALLOWED_NETWORK_TYPE);
-					} else {
-
+					else
+					{
 						mCurrentProfile = mNextProfile;
 						mNextProfile = null;
 
@@ -601,8 +578,6 @@ public class CharonVpnService extends VpnService implements Runnable
 		{
 			VpnService.Builder builder = new CharonVpnService.Builder();
 			builder.setSession(mName);
-
-			//not setting configure intent.
 			return builder;
 		}
 
@@ -783,7 +758,6 @@ public class CharonVpnService extends VpnService implements Runnable
 	static
 	{
 		System.loadLibrary("strongswan");
-
 		System.loadLibrary("hydra");
 		System.loadLibrary("charon");
 		System.loadLibrary("ipsec");
