@@ -73,31 +73,6 @@ public class VPNManager extends CordovaPlugin {
 
     private VpnProfile vpnInfo = null;
     private CallbackContext callbackContext;
-
-    private class CordovaVpnStateListener implements VpnStateService.VpnStateListener {
-        private CallbackContext callbackContext;
-        private VpnStateService mService;
-
-        public CordovaVpnStateListener(CallbackContext _callbackContext, VpnStateService _mService) {
-            callbackContext = _callbackContext;
-            mService = _mService;
-        }
-
-        @Override
-        public void stateChanged() {
-            VpnStateService.ErrorState eState = mService.getErrorState();
-            VpnStateService.State newState = mService.getState();
-            PluginResult pr;
-            if(eState != VpnStateService.ErrorState.NO_ERROR) {
-                pr = new PluginResult(PluginResult.Status.ERROR, eState.toString());
-            } else {
-                pr = new PluginResult(PluginResult.Status.OK, newState.toString());
-                pr.setKeepCallback(true);
-            }
-            callbackContext.sendPluginResult(pr);
-        }
-    }
-
     private VpnStateService mService;
     private final Object mServiceLock = new Object();
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -175,7 +150,7 @@ public class VPNManager extends CordovaPlugin {
     }
 
     private void enableConnection(VpnProfile profile, CallbackContext callbackContext) {
-        mService.registerListener(new CordovaVpnStateListener(callbackContext, mService));
+        mService.registerListener(new CordovaVPNStateListener(callbackContext, mService));
         Intent cintent = new Intent(cordova.getActivity(), CharonVpnService.class);
         cintent.putExtra("profile", vpnInfo);
         cordova.getActivity().startService(cintent);
