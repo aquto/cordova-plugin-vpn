@@ -198,18 +198,21 @@ public class VPNManager extends CordovaPlugin {
         fos.close();
     }
 
+    private boolean isActive() {
+        boolean active = false;
+        if(mService != null)
+            active = (mService.getState() == VpnStateService.State.CONNECTED);
+        return active;
+    }
+
     private PluginResult handleIsUpAction() {
-        //this file will exist iff there is an active VPN connection
-        File vpn = new File("/sys/class/net/tun0");
-        return new PluginResult(PluginResult.Status.OK, vpn.exists());
+        return new PluginResult(PluginResult.Status.OK, isActive());
     }
 
     private PluginResult handleStatusAction() {
-        //this file will exist iff there is an active VPN connection
-        File vpn = new File("/sys/class/net/tun0");
         JSONObject statusObj = new JSONObject();
         try {
-            statusObj.put(JSONParameters.UP, vpn.exists());
+            statusObj.put(JSONParameters.UP, isActive());
             return new PluginResult(PluginResult.Status.OK, statusObj);
         } catch(JSONException je) {
             return error(ErrorCode.UNKNOWN_ERROR);
