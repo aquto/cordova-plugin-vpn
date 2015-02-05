@@ -48,9 +48,19 @@ public class VPNManager extends CordovaPlugin {
         public static final String DISABLE = "disable";
     }
 
+    private final class JSONParameters {
+        public static final String VPN_HOST = "vpnHost";
+        public static final String VPN_USERNAME = "vpnUsername";
+        public static final String VPN_PASSWORD = "vpnPassword";
+        public static final String UP = "up";
+        public static final String CERTIFICATE = "certificate";
+        public static final String CERTIFICATE_PASSWORD = "certificatePassword";
+    }
+
     private static final String TAG = VPNManager.class.getSimpleName();
     private static final int RESULT_OK = -1;
     private static final int PREPARE_VPN_SERVICE = 0;
+    private static final String PKCS12 = "PKCS12";
 
     private ConnectionValidityChecker validityChecker;
     private VpnProfile vpnInfo = null;
@@ -137,7 +147,7 @@ public class VPNManager extends CordovaPlugin {
     private void enableConnection(VpnProfile profile, CallbackContext callbackContext) {
         mService.registerListener(new CordovaVPNStateListener(callbackContext, mService));
         Intent cintent = new Intent(cordova.getActivity(), CharonVpnService.class);
-        cintent.putExtra("profile", vpnInfo);
+        cintent.putExtra(CharonVpnService.PROFILE_BUNDLE_KEY, vpnInfo);
         cordova.getActivity().startService(cintent);
     }
 
@@ -157,9 +167,9 @@ public class VPNManager extends CordovaPlugin {
 
     private VpnProfile toVpnProfile(JSONObject provisioningJson) throws JSONException {
         String gateway, username, password;
-        gateway = provisioningJson.getString("vpnHost");
-        username = provisioningJson.getString("vpnUsername");
-        password = provisioningJson.getString("vpnPassword");
+        gateway = provisioningJson.getString(JSONParameters.VPN_HOST);
+        username = provisioningJson.getString(JSONParameters.VPN_USERNAME);
+        password = provisioningJson.getString(JSONParameters.VPN_PASSWORD);
         if(gateway == null || username == null || password == null)
             return null;
         VpnProfile vpnInfo = new VpnProfile();
@@ -173,10 +183,10 @@ public class VPNManager extends CordovaPlugin {
 
     private void createKeystore(JSONObject provisioningJson) throws Exception {
         String b64Cert, certPassword;
-        b64Cert = provisioningJson.getString("certificate");
-        certPassword = provisioningJson.getString("certificatePassword");
+        b64Cert = provisioningJson.getString(JSONParameters.CERTIFICATE);
+        certPassword = provisioningJson.getString(JSONParameters.CERTIFICATE_PASSWORD);
 
-        KeyStore keystore = KeyStore.getInstance("PKCS12");
+        KeyStore keystore = KeyStore.getInstance(PKCS12);
         byte[] cert = android.util.Base64.decode(b64Cert, 0);
 
         InputStream is = new java.io.ByteArrayInputStream(cert);
@@ -199,7 +209,7 @@ public class VPNManager extends CordovaPlugin {
         File vpn = new File("/sys/class/net/tun0");
         JSONObject statusObj = new JSONObject();
         try {
-            statusObj.put("up", vpn.exists());
+            statusObj.put(JSONParameters.UP, vpn.exists());
             return new PluginResult(PluginResult.Status.OK, statusObj);
         } catch(JSONException je) {
             return error(ErrorCode.UNKNOWN_ERROR);

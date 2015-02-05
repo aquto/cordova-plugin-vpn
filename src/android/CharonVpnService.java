@@ -70,6 +70,7 @@ public class CharonVpnService extends VpnService implements Runnable
 
 	private static final String TAG = CharonVpnService.class.getSimpleName();
 	public static final String LOG_FILE = "charon.log";
+	public static final String PROFILE_BUNDLE_KEY = "profile";
 
 	private String mLogFile;
 	private Thread mConnectionHandler;
@@ -143,7 +144,7 @@ public class CharonVpnService extends VpnService implements Runnable
 			VpnProfile profile = null;
 			if (bundle != null)
 			{
-				profile = (VpnProfile)bundle.getParcelable("profile");
+				profile = (VpnProfile)bundle.getParcelable(PROFILE_BUNDLE_KEY);
 			}
 			setNextProfile(profile);
 		}

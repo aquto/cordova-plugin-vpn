@@ -22,7 +22,7 @@ public class ConnectionValidityChecker extends BroadcastReceiver {
                     }));
 
     private boolean allowWiFi;
-
+    private final static String ALLOWWIFI_KEY = "allowWiFi";
     private final Context mContext;
 
     public ConnectionValidityChecker(Context context) {
@@ -30,7 +30,7 @@ public class ConnectionValidityChecker extends BroadcastReceiver {
         try {
             ApplicationInfo ai = context.getPackageManager().getApplicationInfo(mContext.getPackageName(), PackageManager.GET_META_DATA);
             Bundle bundle = ai.metaData;
-            allowWiFi = bundle.getBoolean("allowWiFi", false);
+            allowWiFi = bundle.getBoolean(ALLOWWIFI_KEY, false);
         } catch(PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Failed to load meta-data, NameNotFound: " + e.getMessage());
             allowWiFi = false;
