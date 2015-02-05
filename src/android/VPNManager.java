@@ -33,21 +33,32 @@ import android.net.ConnectivityManager;
 import android.content.Context;
 import org.strongswan.android.logic.CharonVpnService;
 import org.strongswan.android.logic.NetworkManager;
+import org.strongswan.android.logic.VpnStateService;
 import android.net.NetworkInfo;
 import org.json.JSONException;
 import android.content.pm.PackageManager;
 import java.util.List;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnType;
+import android.content.ServiceConnection;
+import android.content.ComponentName;
+import android.os.IBinder;
+
+
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.CordovaInterface;
+
+
+import android.app.Service;
 
 public class VPNManager extends CordovaPlugin {
 
     public enum ErrorCode {
-       NOT_SUPPORTED,
-       MISSING_FIELDS,
-       UNKNOWN_ERROR,
-       PERMISSION_NOT_GRANTED,
-       DISALLOWED_NETWORK_TYPE
+        NOT_SUPPORTED,
+        MISSING_FIELDS,
+        UNKNOWN_ERROR,
+        PERMISSION_NOT_GRANTED,
+        DISALLOWED_NETWORK_TYPE
     }
 
     private static final String TAG = "VPNManager";
@@ -59,6 +70,69 @@ public class VPNManager extends CordovaPlugin {
     private VpnProfile vpnInfo = null;
 
     private CallbackContext callbackContext;
+
+    private class CordovaVpnStateListener implements VpnStateService.VpnStateListener {
+        private CallbackContext callbackContext;
+        private VpnStateService mService;
+
+        public CordovaVpnStateListener(CallbackContext _callbackContext, VpnStateService _mService) {
+            callbackContext = _callbackContext;
+            mService = _mService;
+        }
+
+        @Override
+        public void stateChanged() {
+            VpnStateService.ErrorState eState = mService.getErrorState();
+            VpnStateService.State newState = mService.getState();
+            PluginResult pr;
+            if(eState != VpnStateService.ErrorState.NO_ERROR) {
+                pr = new PluginResult(PluginResult.Status.ERROR, eState.toString());
+            } else {
+                pr = new PluginResult(PluginResult.Status.OK, newState.toString());
+                pr.setKeepCallback(true);
+            }
+            callbackContext.sendPluginResult(pr);
+        }
+    }
+
+    private VpnStateService mService;
+    private final Object mServiceLock = new Object();
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            synchronized(mServiceLock) {
+                mService = null;
+            }
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            synchronized(mServiceLock) {
+                mService = ((VpnStateService.LocalBinder)service).getService();
+            }
+        }
+    };
+
+    @Override
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
+        Intent stateIntent = new Intent(cordova.getActivity(), VpnStateService.class);
+        cordova.getActivity().startService(stateIntent);
+        cordova.getActivity().bindService(stateIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onDestroy() {
+        if(mService != null) {
+            cordova.getActivity().unbindService(mServiceConnection);
+        }
+    }
+
+
+
+
+
 
     private boolean isDeviceVpnCapable()
     {
@@ -137,8 +211,7 @@ public class VPNManager extends CordovaPlugin {
       case PREPARE_VPN_SERVICE:
         if (resultCode == RESULT_OK)
         {
-          CharonVpnService.registerCallback(callbackContext);
-
+          mService.registerListener(new CordovaVpnStateListener(callbackContext, mService));
           Intent cintent = new Intent(cordova.getActivity(), CharonVpnService.class);
           cintent.putExtra("profile", vpnInfo);
           cordova.getActivity().startService(cintent);
