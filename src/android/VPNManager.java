@@ -24,10 +24,8 @@ import java.io.*;
 import java.security.KeyStore;
 import java.util.List;
 import org.apache.cordova.*;
-import org.strongswan.android.logic.CharonVpnService;
-import org.strongswan.android.logic.VpnStateService;
-import org.strongswan.android.data.VpnProfile;
-import org.strongswan.android.data.VpnType;
+import org.strongswan.android.logic.*;
+import org.strongswan.android.data.*;
 import org.json.*;
 
 public class VPNManager extends CordovaPlugin {
@@ -63,7 +61,7 @@ public class VPNManager extends CordovaPlugin {
     private static final String PKCS12 = "PKCS12";
 
     private ConnectionValidityChecker validityChecker;
-    private VpnProfile vpnInfo = null;
+    private VpnProfile vpnInfo;
     private CallbackContext callbackContext;
     private VpnStateService mService;
     private final Object mServiceLock = new Object();
@@ -155,9 +153,9 @@ public class VPNManager extends CordovaPlugin {
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         switch(requestCode) {
             case PREPARE_VPN_SERVICE:
-                if(resultCode == RESULT_OK) {
+                if(resultCode == RESULT_OK)
                     enableConnection(vpnInfo, callbackContext);
-                } else
+                else
                     callbackContext.sendPluginResult(error(ErrorCode.PERMISSION_NOT_GRANTED));
                 break;
             default:

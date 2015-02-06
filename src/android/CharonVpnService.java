@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2014-2015 Paul Kinsky
  * Copyright (C) 2012-2013 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
@@ -15,41 +14,31 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
+
 package org.strongswan.android.logic;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.RSAPrivateKeySpec;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-
 
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.logic.VpnStateService.ErrorState;
 import org.strongswan.android.logic.VpnStateService.State;
 import org.strongswan.android.logic.imc.ImcState;
 import org.strongswan.android.logic.imc.RemediationInstruction;
-
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -117,9 +106,8 @@ public class CharonVpnService extends VpnService implements Runnable
 	static final int STATE_GENERIC_ERROR = 7;
 
 	private KeyStore _keystore = null;
-	private KeyStore getKeyStore()
+	private KeyStore getKeyStore() throws KeyStoreException, FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException
 	{
-		try{
 		if (_keystore == null)
 		{
 			_keystore = KeyStore.getInstance("PKCS12");
@@ -129,10 +117,6 @@ public class CharonVpnService extends VpnService implements Runnable
 			Log.d(TAG, "loaded keystore");
 		}
 		return _keystore;
-		}catch (Exception e) {
-			return null;
-		}
-
 	}
 
 	@Override
@@ -497,22 +481,17 @@ public class CharonVpnService extends VpnService implements Runnable
 	 * @throws Exception
 	 * @throws KeyChainException
 	 */
-	private byte[][] getUserCertificate() throws Exception
+	private byte[][] getUserCertificate() throws KeyStoreException, FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException
 	{
-		try{
-			Certificate[] certchain = getKeyStore().getCertificateChain(mCurrentProfile.getUserCertificateAlias());
+		Certificate[] certchain = getKeyStore().getCertificateChain(mCurrentProfile.getUserCertificateAlias());
 
-			byte[][] res = new byte[certchain.length][];
+		byte[][] res = new byte[certchain.length][];
 
-			for (int i = 0; i < certchain.length; i++){
-				res[i] = certchain[i].getEncoded();
-			}
-
-			return res;
-		} catch (Exception e) {
-			Log.e(TAG, "cert load failed w/ " + e);
-			throw e;
+		for (int i = 0; i < certchain.length; i++){
+			res[i] = certchain[i].getEncoded();
 		}
+
+		return res;
 	}
 
 
@@ -526,15 +505,10 @@ public class CharonVpnService extends VpnService implements Runnable
 	 * @throws Exception
 	 * @throws CertificateEncodingException
 	 */
-	private PrivateKey getUserKey() throws Exception
+	private PrivateKey getUserKey() throws KeyStoreException, FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException
 	{
-		try{
-			PrivateKey priv = (PrivateKey)getKeyStore().getKey(mCurrentProfile.getUserCertificateAlias(), keystorePass.toCharArray());
-			return priv;
-		} catch (Exception ex) {
-			Log.e(TAG, "failed to create keys due to " + ex);
-			throw ex;
-		}
+		PrivateKey priv = (PrivateKey)getKeyStore().getKey(mCurrentProfile.getUserCertificateAlias(), keystorePass.toCharArray());
+		return priv;
 	}
 
 	/**
