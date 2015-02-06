@@ -24,5 +24,7 @@ public class CordovaVPNStateListener implements VpnStateService.VpnStateListener
             pr.setKeepCallback(true);
         }
         callbackContext.sendPluginResult(pr);
+        if(eState != VpnStateService.ErrorState.NO_ERROR || newState == VpnStateService.State.DISABLED)
+            mService.unregisterListener(this);
     }
 }
