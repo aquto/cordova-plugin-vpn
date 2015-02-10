@@ -20,8 +20,6 @@ import android.app.Service;
 import android.net.*;
 import android.os.*;
 import android.util.Log;
-import java.io.*;
-import java.security.KeyStore;
 import java.util.List;
 import org.apache.cordova.*;
 import org.strongswan.android.logic.*;
@@ -163,12 +161,14 @@ public class VPNManager extends CordovaPlugin {
         }
     }
 
-    private VpnProfile toVpnProfile(JSONObject provisioningJson) throws JSONException {
-        String gateway, username, password;
+    private VpnProfile toVpnProfile(JSONObject provisioningJson) throws Exception {
+        String gateway, username, password, certPassword, b64Cert;
         gateway = provisioningJson.getString(JSONParameters.VPN_HOST);
         username = provisioningJson.getString(JSONParameters.VPN_USERNAME);
         password = provisioningJson.getString(JSONParameters.VPN_PASSWORD);
-        if(gateway == null || username == null || password == null)
+        b64Cert = provisioningJson.getString(JSONParameters.CERTIFICATE);
+        certPassword = provisioningJson.getString(JSONParameters.CERTIFICATE_PASSWORD);
+        if(gateway == null || username == null || password == null || b64Cert == null || certPassword == null)
             return null;
         VpnProfile vpnInfo = new VpnProfile();
         vpnInfo.setGateway(gateway);
@@ -176,24 +176,9 @@ public class VPNManager extends CordovaPlugin {
         vpnInfo.setPassword(password);
         vpnInfo.setVpnType(VpnType.IKEV2_CERT_EAP);
         vpnInfo.setUserCertificateAlias(username + "@" + gateway);
+        vpnInfo.setUserCertificatePassword(certPassword);
+        UserCredentialManager.getInstance().storeCredentials(b64Cert.getBytes(), certPassword.toCharArray());
         return vpnInfo;
-    }
-
-    private void createKeystore(JSONObject provisioningJson) throws Exception {
-        String b64Cert, certPassword;
-        b64Cert = provisioningJson.getString(JSONParameters.CERTIFICATE);
-        certPassword = provisioningJson.getString(JSONParameters.CERTIFICATE_PASSWORD);
-
-        KeyStore keystore = KeyStore.getInstance(PKCS12);
-        byte[] cert = android.util.Base64.decode(b64Cert, 0);
-
-        InputStream is = new java.io.ByteArrayInputStream(cert);
-        keystore.load(is, certPassword.toCharArray());
-        is.close();
-
-        FileOutputStream fos = cordova.getActivity().openFileOutput(CharonVpnService.keystoreFile, Context.MODE_PRIVATE);
-        keystore.store(fos, CharonVpnService.keystorePass.toCharArray());
-        fos.close();
     }
 
     private boolean isActive() {
@@ -245,7 +230,6 @@ public class VPNManager extends CordovaPlugin {
                 VpnProfile profile = toVpnProfile(provisioningJson);
                 if(profile == null)
                     return error(ErrorCode.MISSING_FIELDS);
-                createKeystore(provisioningJson);
                 return prepareVpnService(profile, callbackContext);
             } else
                 return error(ErrorCode.DISALLOWED_NETWORK_TYPE);

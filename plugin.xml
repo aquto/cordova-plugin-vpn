@@ -83,7 +83,6 @@
         <lib-file src="src/android/libs/AQStrongSwan.jar" />
 
         <source-file src="src/android/VPNManager.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/CharonVpnService.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/CordovaVPNStateListener.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/ConnectionValidityChecker.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/libs/armeabi/libstrongswan.so" target-dir="libs/armeabi" />
