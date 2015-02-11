@@ -42,7 +42,6 @@ public class VPNManager extends CordovaPlugin {
     private static final String TAG = VPNManager.class.getSimpleName();
     private static final int RESULT_OK = -1;
     private static final int PREPARE_VPN_SERVICE = 0;
-    private static final String PKCS12 = "PKCS12";
 
     private ConnectionValidityChecker validityChecker;
     private VpnProfile vpnInfo;
