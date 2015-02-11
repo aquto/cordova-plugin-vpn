@@ -93,7 +93,6 @@
         <source-file src="src/android/libs/armeabi/libtncif.so" target-dir="libs/armeabi" />
         <source-file src="src/android/libs/armeabi/libtnccs.so" target-dir="libs/armeabi" />
         <source-file src="src/android/libs/armeabi/libimcv.so" target-dir="libs/armeabi" />
-        <source-file src="src/android/libs/armeabi/libpts.so" target-dir="libs/armeabi" />
 
 
     </platform>
