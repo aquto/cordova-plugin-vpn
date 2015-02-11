@@ -53,6 +53,10 @@
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <service
+                android:name="org.strongswan.android.logic.VpnStateService"
+                android:exported="false" >
+            </service>
+            <service
                 android:name="org.strongswan.android.logic.CharonVpnService"
                 android:exported="false"
                 android:permission="android.permission.BIND_VPN_SERVICE" >
@@ -60,6 +64,7 @@
                     <action android:name="android.net.VpnService" />
                 </intent-filter>
             </service>
+            <meta-data android:name="allowWiFi" android:value="$ALLOWWIFI" />
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="/*">
@@ -71,18 +76,15 @@
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="VPNManager">
               <param name="android-package" value="org.aquto.cordova.vpn.VPNManager"/>
+              <param name="onload" value="true" />
             </feature>
         </config-file>
 
+        <lib-file src="src/android/libs/AQStrongSwan.jar" />
 
         <source-file src="src/android/VPNManager.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/vpn_plugin_config.xml" target-dir="res/values" />
-        <source-file src="src/android/VpnProfile.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/VpnType.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/RemediationInstruction.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/ImcState.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/CharonVpnService.java" target-dir="src/com/plugin/VPNManager" />
-        <source-file src="src/android/NetworkManager.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/CordovaVPNStateListener.java" target-dir="src/com/plugin/VPNManager" />
+        <source-file src="src/android/ConnectionValidityChecker.java" target-dir="src/com/plugin/VPNManager" />
         <source-file src="src/android/libs/armeabi/libstrongswan.so" target-dir="libs/armeabi" />
         <source-file src="src/android/libs/armeabi/libhydra.so" target-dir="libs/armeabi" />
         <source-file src="src/android/libs/armeabi/libcharon.so" target-dir="libs/armeabi" />
