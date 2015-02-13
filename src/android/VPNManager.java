@@ -28,6 +28,8 @@ public class VPNManager extends CordovaPlugin {
         public static final String IS_VPN_CAPABLE = "isVpnCapable";
         public static final String ENABLE = "enable";
         public static final String DISABLE = "disable";
+        public static final String REGISTER_CALLBACK = "registerCallback";
+        public static final String UNREGISTER_CALLBACK = "unregisterCallback";
     }
 
     private final class JSONParameters {
@@ -44,9 +46,10 @@ public class VPNManager extends CordovaPlugin {
     private static final int PREPARE_VPN_SERVICE = 0;
 
     private ConnectionValidityChecker validityChecker;
-    private VpnProfile vpnInfo;
     private CallbackContext callbackContext;
+    private VpnProfile vpnInfo;
     private VpnStateService mService;
+    private CordovaVPNStateListener stateListener;
     private final Object mServiceLock = new Object();
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -77,15 +80,13 @@ public class VPNManager extends CordovaPlugin {
 
     @Override
     public void onDestroy() {
-        if(mService != null) {
+        if(mService != null)
             cordova.getActivity().unbindService(mServiceConnection);
-        }
         validityChecker.unregister();
     }
 
     private PluginResult error(ErrorCode error) {
-        PluginResult.Status status = PluginResult.Status.ERROR;
-        return new PluginResult(status, error.toString());
+        return new PluginResult(PluginResult.Status.ERROR, error.toString());
     }
 
     /**
@@ -106,9 +107,7 @@ public class VPNManager extends CordovaPlugin {
         if(intent != null) {
             try {
                 cordova.startActivityForResult((CordovaPlugin)this, intent, PREPARE_VPN_SERVICE);
-                PluginResult result = new PluginResult(PluginResult.Status.OK, VpnStateService.State.CONNECTING.toString());
-                result.setKeepCallback(true);
-                return result;
+                return new PluginResult(PluginResult.Status.OK, VpnStateService.State.CONNECTING.toString());
             } catch(ActivityNotFoundException ex) {
                 /* it seems some devices, even though they come with Android 4,
                 * don't have the VPN components built into the system image.
@@ -118,15 +117,12 @@ public class VPNManager extends CordovaPlugin {
             }
         } else {
             /* user already granted permission to use VpnService */
-            enableConnection(profile, callbackContext);
-            PluginResult result = new PluginResult(PluginResult.Status.OK, VpnStateService.State.CONNECTING.toString());
-            result.setKeepCallback(true);
-            return result;
+            enableConnection(profile);
+            return new PluginResult(PluginResult.Status.OK, VpnStateService.State.CONNECTING.toString());
         }
     }
 
-    private void enableConnection(VpnProfile profile, CallbackContext callbackContext) {
-        mService.registerListener(new CordovaVPNStateListener(callbackContext, mService));
+    private void enableConnection(VpnProfile profile) {
         Intent cintent = new Intent(cordova.getActivity(), CharonVpnService.class);
         cintent.putExtra(CharonVpnService.PROFILE_BUNDLE_KEY, vpnInfo);
         cordova.getActivity().startService(cintent);
@@ -137,7 +133,7 @@ public class VPNManager extends CordovaPlugin {
         switch(requestCode) {
             case PREPARE_VPN_SERVICE:
                 if(resultCode == RESULT_OK)
-                    enableConnection(vpnInfo, callbackContext);
+                    enableConnection(vpnInfo);
                 else
                     callbackContext.sendPluginResult(error(ErrorCode.PERMISSION_NOT_GRANTED));
                 break;
@@ -209,15 +205,33 @@ public class VPNManager extends CordovaPlugin {
         } catch(JSONException je) {
             return error(ErrorCode.MISSING_FIELDS);
         } catch(Exception e) {
-            Log.e(TAG, "error enabling VPN", e);
+            Log.e(TAG, "Unknown error enabling VPN", e);
             return error(ErrorCode.UNKNOWN_ERROR);
         }
     }
 
     private PluginResult handleDisableAction() {
         // tear down the active VPN connection
-        Intent intent = new Intent(cordova.getActivity(), CharonVpnService.class);
-        cordova.getActivity().startService(intent);
+        if(mService != null)
+            mService.disconnect();
+        return new PluginResult(PluginResult.Status.OK, true);
+    }
+
+    private PluginResult handleRegisterCallbackAction(CallbackContext callbackContext) {
+        if(stateListener != null)
+            mService.unregisterListener(stateListener);
+        stateListener = new CordovaVPNStateListener(callbackContext, mService);
+        mService.registerListener(stateListener);
+        PluginResult res = new PluginResult(PluginResult.Status.OK, true);
+        res.setKeepCallback(true);
+        return res;
+    }
+
+    private PluginResult handleUnregisterCallbackAction(CallbackContext callbackContext) {
+        if(stateListener != null) {
+            mService.unregisterListener(stateListener);
+            stateListener = null;
+        }
         return new PluginResult(PluginResult.Status.OK, true);
     }
 
@@ -233,6 +247,10 @@ public class VPNManager extends CordovaPlugin {
             callbackContext.sendPluginResult(handleEnableAction(args, callbackContext));
         else if(action.equals(PluginActions.DISABLE))
             callbackContext.sendPluginResult(handleDisableAction());
+        else if(action.equals(PluginActions.REGISTER_CALLBACK))
+            callbackContext.sendPluginResult(handleRegisterCallbackAction(callbackContext));
+        else if(action.equals(PluginActions.UNREGISTER_CALLBACK))
+            callbackContext.sendPluginResult(handleUnregisterCallbackAction(callbackContext));
         else
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION, ""));
         return true;
