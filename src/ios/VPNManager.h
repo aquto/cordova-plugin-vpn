@@ -2,6 +2,9 @@
 
 @interface VPNManager : CDVPlugin
 
+- (void)pluginInitialize;
+- (void)registerCallback:(CDVInvokedUrlCommand*)command;
+- (void)unregisterCallback:(CDVInvokedUrlCommand*)command;
 - (void)enable:(CDVInvokedUrlCommand*)command;
 - (void)disable:(CDVInvokedUrlCommand*)command;
 - (void)provision:(CDVInvokedUrlCommand*)command;

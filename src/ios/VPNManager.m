@@ -49,6 +49,21 @@ static BOOL allowWiFi;
     }];
 }
 
+- (void)registerCallback:(CDVInvokedUrlCommand*)command {
+    NSString* localCallbackId = command.callbackId;
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[NSNotificationCenter defaultCenter] addObserverForName:NEVPNStatusDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notif) {
+        CDVPluginResult* pluginResult = [self vpnStatusToResult:vpnManager.connection.status];
+        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
+        NSLog (@"Successfully received VPN status change notification: %d", vpnManager.connection.status);
+    }];
+}
+
+- (void)unregisterCallback:(CDVInvokedUrlCommand*)command {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)enable:(CDVInvokedUrlCommand*)command {
     NSString* localCallbackId = command.callbackId;
 
@@ -68,15 +83,8 @@ static BOOL allowWiFi;
             if(startError) {
                 NSLog(@"Start error: %@", startError.localizedDescription);
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
-            } else {
-                [[NSNotificationCenter defaultCenter] removeObserver:self];
-                [[NSNotificationCenter defaultCenter] addObserverForName:NEVPNStatusDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notif) {
-                    CDVPluginResult* pluginResult = [self vpnStatusToResult:vpnManager.connection.status];
-                    [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
-                    [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
-                    NSLog (@"Successfully received VPN status change notification: %d", vpnManager.connection.status);
-                }];
-            }
+            } else
+                [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CONNECTING"] callbackId:localCallbackId];
         }
     }];
 }
