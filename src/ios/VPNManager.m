@@ -128,22 +128,6 @@ static BOOL allowWiFi;
     return result;
 }
 
-- (void)isUp:(CDVInvokedUrlCommand*)command {
-    NSString* localCallbackId = command.callbackId;
-    
-    [self.commandDelegate runInBackground:^{
-        CDVPluginResult* pluginResult = nil;
-        
-        if(vpnManager.connection.status == NEVPNStatusConnected)
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
-        else
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:NO];
-        
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
-        
-    }];
-}
-
 - (void)provision:(CDVInvokedUrlCommand*)command {
     NSMutableDictionary* options = [command.arguments objectAtIndex:0];
     NSString* localCallbackId = command.callbackId;
