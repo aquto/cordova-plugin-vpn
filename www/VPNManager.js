@@ -9,8 +9,8 @@ module.exports = {
     isVpnCapable: function(success, error, options) {
         cordova.exec(success, error, "VPNManager", "isVpnCapable", [options]);
     },
-    isUp: function(success, error, options) {
-        cordova.exec(success, error, "VPNManager", "isUp", [options]);
+    needsProfile: function(success, error, options) {
+        cordova.exec(success, error, "VPNManager", "needsProfile", [options]);
     },
     // attempt to start the vpn
     enable: function(success, error, options) {
