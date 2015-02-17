@@ -6,6 +6,7 @@
 - (void)disable:(CDVInvokedUrlCommand*)command;
 - (void)provision:(CDVInvokedUrlCommand*)command;
 - (void)status:(CDVInvokedUrlCommand*)command;
+- (void)needsProfile:(CDVInvokedUrlCommand*)command;
 - (void)dealloc;
 
 @end
