@@ -23,7 +23,7 @@ public class VPNManager extends CordovaPlugin {
     }
 
     private final class PluginActions {
-        public static final String IS_UP = "isUp";
+        public static final String NEEDS_PROFILE = "needsProfile";
         public static final String STATUS = "status";
         public static final String IS_VPN_CAPABLE = "isVpnCapable";
         public static final String ENABLE = "enable";
@@ -173,8 +173,8 @@ public class VPNManager extends CordovaPlugin {
         return active;
     }
 
-    private PluginResult handleIsUpAction() {
-        return new PluginResult(PluginResult.Status.OK, isActive());
+    private PluginResult handleNeedsProfileAction(CallbackContext callbackContext) {
+        return new PluginResult(PluginResult.Status.OK, false);
     }
 
     private PluginResult handleStatusAction() {
@@ -235,8 +235,8 @@ public class VPNManager extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
-        if(action.equals(PluginActions.IS_UP))
-            callbackContext.sendPluginResult(handleIsUpAction());
+        if(action.equals(PluginActions.NEEDS_PROFILE))
+            callbackContext.sendPluginResult(handleNeedsProfileAction(callbackContext));
         else if(action.equals(PluginActions.STATUS))
             callbackContext.sendPluginResult(handleStatusAction());
         else if(action.equals(PluginActions.IS_VPN_CAPABLE))
