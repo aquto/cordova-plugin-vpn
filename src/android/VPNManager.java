@@ -166,27 +166,15 @@ public class VPNManager extends CordovaPlugin {
         return vpnInfo;
     }
 
-    private boolean isActive() {
-        boolean active = false;
-        if(mService != null)
-            active = (mService.getState() == VpnStateService.State.CONNECTED);
-        return active;
-    }
-
     private PluginResult handleNeedsProfileAction(CallbackContext callbackContext) {
         return new PluginResult(PluginResult.Status.OK, false);
     }
 
     private PluginResult handleStatusAction() {
-        JSONObject statusObj = new JSONObject();
-        try {
-            statusObj.put(JSONParameters.UP, isActive());
-            return new PluginResult(PluginResult.Status.OK, statusObj);
-        } catch(JSONException je) {
-            return error(ErrorCode.UNKNOWN_ERROR);
-        } catch(Exception e) {
-            return error(ErrorCode.UNKNOWN_ERROR);
-        }
+        if(mService != null)
+            return new PluginResult(PluginResult.Status.OK, StateConversion.stateToString(mService.getState()));
+        else
+            return new PluginResult(PluginResult.Status.OK, StateConversion.stateToString(VpnStateService.State.DISABLED));
     }
 
     private PluginResult handleIsVpnCapableAction() {
