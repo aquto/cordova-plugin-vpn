@@ -25,5 +25,11 @@ module.exports = {
     },
     status: function(success, error, options) {
         cordova.exec(success, error, "VPNManager", "status", [options]);
+    },
+    registerCallback: function(success, error, options) {
+        cordova.exec(success, error, "VPNManager", "registerCallback", [options]);
+    },
+    unregisterCallback: function(success, error, options) {
+        cordova.exec(success, error, "VPNManager", "unregisterCallback", [options]);
     }
 };
