@@ -128,29 +128,13 @@ static BOOL allowWiFi;
     return result;
 }
 
-- (void)isUp:(CDVInvokedUrlCommand*)command {
-    NSString* localCallbackId = command.callbackId;
-    
-    [self.commandDelegate runInBackground:^{
-        CDVPluginResult* pluginResult = nil;
-        
-        if(vpnManager.connection.status == NEVPNStatusConnected)
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
-        else
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:NO];
-        
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
-        
-    }];
-}
-
 - (void)provision:(CDVInvokedUrlCommand*)command {
     NSMutableDictionary* options = [command.arguments objectAtIndex:0];
     NSString* localCallbackId = command.callbackId;
-    
+
     [self.commandDelegate runInBackground:^{
         NSLog(@"Provisioning the Kickbit VPN");
-        
+
         NSString* vpnUsername = [options objectForKey:@"vpnUsername"];
         NSString* vpnPassword = [options objectForKey:@"vpnPassword"];
         NSString* vpnHost = [options objectForKey:@"vpnHost"];
@@ -165,7 +149,7 @@ static BOOL allowWiFi;
         [store synchronize];
         [vpnManager loadFromPreferencesWithCompletionHandler:^(NSError *error) {
             __block CDVPluginResult* pluginResult = nil;
-    
+
             if(error) {
                 NSLog(@"Load error: %@", error);
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR] callbackId:localCallbackId];
@@ -208,11 +192,19 @@ static BOOL allowWiFi;
 }
 
 - (void)status:(CDVInvokedUrlCommand*)command {
+    NSString* localCallbackId = command.callbackId;
+
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = [self vpnStatusToResult:vpnManager.connection.status];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
+    }];
+}
+
+- (void)needsProfile:(CDVInvokedUrlCommand*)command {
     NSMutableDictionary* options = [command.arguments objectAtIndex:0];
     NSString* localCallbackId = command.callbackId;
-    
+
     [self.commandDelegate runInBackground:^{
-        BOOL isUp = (vpnManager.connection.status == NEVPNStatusConnected);
         NSString* vpnUsername = [options objectForKey:@"vpnUsername"];
         NSString* vpnPassword = [options objectForKey:@"vpnPassword"];
         NSString* vpnHost = [options objectForKey:@"vpnHost"];
@@ -244,13 +236,8 @@ static BOOL allowWiFi;
                             if(error) {
                                 NSLog(@"Save config failed [%@]", error.localizedDescription);
                                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-                            } else {
-                                NSDictionary *statusData = @{
-                                                            @"up" : [NSNumber numberWithBool:isUp],
-                                                            @"needsProfile" : [NSNumber numberWithBool:NO]
-                                                            };
-                                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData];
-                            }
+                            } else
+                                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:NO];
                             [self.commandDelegate sendPluginResult:pluginResult callbackId:localCallbackId];
                         }];
                     } else {
@@ -261,11 +248,7 @@ static BOOL allowWiFi;
                         [vpnManager removeFromPreferencesWithCompletionHandler:^(NSError *error) {
                             if(error)
                                 NSLog(@"Remove config failed [%@]", error.localizedDescription);
-                            NSDictionary *statusData = @{
-                                                         @"up" : [NSNumber numberWithBool:isUp],
-                                                         @"needsProfile" : [NSNumber numberWithBool:YES]
-                                                         };
-                            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:statusData] callbackId:localCallbackId];
+                            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:localCallbackId];
                         }];
                     }
                 }
