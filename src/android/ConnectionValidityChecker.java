@@ -76,8 +76,9 @@ public class ConnectionValidityChecker extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if(!connectionValid()) {
+        boolean noConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+        boolean isFailover = intent.getBooleanExtra(ConnectivityManager.EXTRA_IS_FAILOVER, false);
+        if(noConnectivity || isFailover || !connectionValid())
             stopVpn();
-        }
     }
 }
