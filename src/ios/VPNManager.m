@@ -146,8 +146,8 @@ static BOOL allowWiFi;
         NSString* vpnUsername = [options objectForKey:@"vpnUsername"];
         NSString* vpnPassword = [options objectForKey:@"vpnPassword"];
         NSString* vpnHost = [options objectForKey:@"vpnHost"];
-        NSString* vpnCert = [options objectForKey:@"certificate"];
-        NSString* vpnCertPassword = [options objectForKey:@"certificatePassword"];
+        NSString* vpnCert = [options objectForKey:@"userCertificate"];
+        NSString* vpnCertPassword = [options objectForKey:@"userCertificatePassword"];
         NSString* appName = [options objectForKey:@"appName"];
 
         NSData* certData = [[NSData alloc]initWithBase64EncodedString:vpnCert options:NSDataBase64DecodingIgnoreUnknownCharacters];
@@ -216,8 +216,8 @@ static BOOL allowWiFi;
         NSString* vpnUsername = [options objectForKey:@"vpnUsername"];
         NSString* vpnPassword = [options objectForKey:@"vpnPassword"];
         NSString* vpnHost = [options objectForKey:@"vpnHost"];
-        NSString* vpnCert = [options objectForKey:@"certificate"];
-        NSString* vpnCertPassword = [options objectForKey:@"certificatePassword"];
+        NSString* vpnCert = [options objectForKey:@"userCertificate"];
+        NSString* vpnCertPassword = [options objectForKey:@"userCertificatePassword"];
         if (vpnUsername != nil && vpnHost != nil && vpnCert != nil && vpnCertPassword != nil && vpnPassword != nil) {
             [vpnManager loadFromPreferencesWithCompletionHandler:^(NSError *error) {
                 if(error)
