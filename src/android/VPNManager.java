@@ -6,7 +6,10 @@ import android.app.Service;
 import android.net.*;
 import android.os.*;
 import android.util.Log;
+import java.io.*;
 import java.util.List;
+import java.security.KeyStore;
+import java.security.cert.*;
 import org.apache.cordova.*;
 import org.strongswan.android.logic.*;
 import org.strongswan.android.data.*;
@@ -37,8 +40,9 @@ public class VPNManager extends CordovaPlugin {
         public static final String VPN_USERNAME = "vpnUsername";
         public static final String VPN_PASSWORD = "vpnPassword";
         public static final String UP = "up";
-        public static final String CERTIFICATE = "certificate";
-        public static final String CERTIFICATE_PASSWORD = "certificatePassword";
+        public static final String USER_CERTIFICATE = "userCertificate";
+        public static final String USER_CERTIFICATE_PASSWORD = "userCertificatePassword";
+        public static final String CA_CERTIFICATE = "caCertificate";
     }
 
     private static final String TAG = VPNManager.class.getSimpleName();
@@ -143,22 +147,40 @@ public class VPNManager extends CordovaPlugin {
     }
 
     private VpnProfile toVpnProfile(JSONObject provisioningJson) throws Exception {
-        String gateway, username, password, certPassword, b64Cert;
+        String gateway, username, password, userCertPassword, b64UserCert, b64CaCert;
         gateway = provisioningJson.getString(JSONParameters.VPN_HOST);
         username = provisioningJson.getString(JSONParameters.VPN_USERNAME);
         password = provisioningJson.getString(JSONParameters.VPN_PASSWORD);
-        b64Cert = provisioningJson.getString(JSONParameters.CERTIFICATE);
-        certPassword = provisioningJson.getString(JSONParameters.CERTIFICATE_PASSWORD);
-        if(gateway == null || username == null || password == null || b64Cert == null || certPassword == null)
+        b64UserCert = provisioningJson.getString(JSONParameters.USER_CERTIFICATE);
+        userCertPassword = provisioningJson.getString(JSONParameters.USER_CERTIFICATE_PASSWORD);
+        b64CaCert = provisioningJson.getString(JSONParameters.CA_CERTIFICATE);
+        if(gateway == null || username == null || password == null || b64UserCert == null || userCertPassword == null || b64CaCert == null)
             return null;
+
+        // Prepare the VPN profile object
         VpnProfile vpnInfo = new VpnProfile();
         vpnInfo.setGateway(gateway);
         vpnInfo.setUsername(username);
         vpnInfo.setPassword(password);
         vpnInfo.setVpnType(VpnType.IKEV2_CERT_EAP);
         vpnInfo.setUserCertificateAlias(username + "@" + gateway);
-        vpnInfo.setUserCertificatePassword(certPassword);
-        UserCredentialManager.getInstance().storeCredentials(b64Cert.getBytes(), certPassword.toCharArray());
+        vpnInfo.setUserCertificatePassword(userCertPassword);
+
+        // Import the user certificate
+        UserCredentialManager.getInstance().storeCredentials(b64UserCert.getBytes(), userCertPassword.toCharArray());
+
+        // Decode the CA certificate from base64 to an X509Certificate
+        byte[] decoded = android.util.Base64.decode(b64CaCert.getBytes(), 0);
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        InputStream in = new ByteArrayInputStream(decoded);
+        X509Certificate certificate = (X509Certificate)factory.generateCertificate(in);
+
+        // And then import it into the Strongswan LocalCertificateStore
+        KeyStore store = KeyStore.getInstance("LocalCertificateStore");
+        store.load(null, null);
+        store.setCertificateEntry(null, certificate);
+        TrustedCertificateManager.getInstance().reset();
+
         return vpnInfo;
     }
 
